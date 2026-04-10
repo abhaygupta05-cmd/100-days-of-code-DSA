@@ -1,0 +1,130 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define MAX 100
+
+// Adjacency List Node
+struct Node {
+    int v, weight;
+    struct Node* next;
+};
+
+// Min Heap Node
+struct HeapNode {
+    int vertex, dist;
+};
+
+// Min Heap
+struct MinHeap {
+    struct HeapNode arr[MAX];
+    int size;
+};
+
+// Create graph node
+struct Node* createNode(int v, int w) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->v = v;
+    newNode->weight = w;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Push into heap
+void push(struct MinHeap* heap, int v, int dist) {
+    int i = heap->size++;
+    while (i > 0 && heap->arr[(i - 1) / 2].dist > dist) {
+        heap->arr[i] = heap->arr[(i - 1) / 2];
+        i = (i - 1) / 2;
+    }
+    heap->arr[i].vertex = v;
+    heap->arr[i].dist = dist;
+}
+
+// Pop from heap
+struct HeapNode pop(struct MinHeap* heap) {
+    struct HeapNode root = heap->arr[0];
+    struct HeapNode last = heap->arr[--heap->size];
+
+    int i = 0;
+    while (2 * i + 1 < heap->size) {
+        int child = 2 * i + 1;
+        if (child + 1 < heap->size && heap->arr[child + 1].dist < heap->arr[child].dist)
+            child++;
+
+        if (last.dist <= heap->arr[child].dist)
+            break;
+
+        heap->arr[i] = heap->arr[child];
+        i = child;
+    }
+    heap->arr[i] = last;
+    return root;
+}
+
+// Dijkstra Function
+void dijkstra(struct Node* adj[], int V, int source) {
+    int dist[MAX];
+
+    // Initialize distances
+    for (int i = 0; i < V; i++)
+        dist[i] = INT_MAX;
+
+    dist[source] = 0;
+
+    struct MinHeap heap;
+    heap.size = 0;
+
+    push(&heap, source, 0);
+
+    while (heap.size > 0) {
+        struct HeapNode top = pop(&heap);
+        int u = top.vertex;
+
+        struct Node* temp = adj[u];
+        while (temp) {
+            int v = temp->v;
+            int w = temp->weight;
+
+            if (dist[v] > dist[u] + w) {
+                dist[v] = dist[u] + w;
+                push(&heap, v, dist[v]);
+            }
+            temp = temp->next;
+        }
+    }
+
+    // Print result
+    printf("Vertex\tDistance from Source\n");
+    for (int i = 0; i < V; i++)
+        printf("%d\t%d\n", i, dist[i]);
+}
+
+// Driver code
+int main() {
+    int V = 5;
+
+    struct Node* adj[MAX] = {NULL};
+
+    // Example graph
+    adj[0] = createNode(1, 10);
+    adj[0]->next = createNode(4, 5);
+
+    adj[1] = createNode(2, 1);
+    adj[1]->next = createNode(4, 2);
+
+    adj[2] = createNode(3, 4);
+
+    adj[3] = createNode(0, 7);
+    adj[3]->next = createNode(2, 6);
+
+    adj[4] = createNode(1, 3);
+    adj[4]->next = createNode(2, 9);
+    adj[4]->next->next = createNode(3, 2);
+
+    int source = 0;
+
+    dijkstra(adj, V, source);
+
+    return 0;
+}
