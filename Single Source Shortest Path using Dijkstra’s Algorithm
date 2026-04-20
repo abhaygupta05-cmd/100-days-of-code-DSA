@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define INF INT_MAX
+
+typedef struct Edge {
+    int target;
+    int weight;
+    struct Edge* next;
+} Edge;
+
+typedef struct {
+    int dist;
+    int node;
+} PQNode;
+
+void swap(PQNode* a, PQNode* b) {
+    PQNode temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void push(PQNode heap[], int* size, int dist, int node) {
+    heap[*size] = (PQNode){dist, node};
+    int i = (*size)++;
+    while (i > 0 && heap[i].dist < heap[(i - 1) / 2].dist) {
+        swap(&heap[i], &heap[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+
+PQNode pop(PQNode heap[], int* size) {
+    PQNode top = heap[0];
+    heap[0] = heap[--(*size)];
+    int i = 0;
+    while (2 * i + 1 < *size) {
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+        int smallest = left;
+        if (right < *size && heap[right].dist < heap[left].dist) smallest = right;
+        if (heap[i].dist <= heap[smallest].dist) break;
+        swap(&heap[i], &heap[smallest]);
+        i = smallest;
+    }
+    return top;
+}
+
+int main() {
+    int n, m;
+    if (scanf("%d %d", &n, &m) != 2) return 0;
+
+    Edge** adj = (Edge**)calloc(n + 1, sizeof(Edge*));
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        Edge* newEdge = (Edge*)malloc(sizeof(Edge));
+        newEdge->target = v;
+        newEdge->weight = w;
+        newEdge->next = adj[u];
+        adj[u] = newEdge;
+    }
+
+    int source;
+    scanf("%d", &source);
+
+    int* dists = (int*)malloc((n + 1) * sizeof(int));
+    for (int i = 1; i <= n; i++) dists[i] = INF;
+    dists[source] = 0;
+
+    PQNode* heap = (PQNode*)malloc(m * 2 * sizeof(PQNode));
+    int heapSize = 0;
+    push(heap, &heapSize, 0, source);
+
+    while (heapSize > 0) {
+        PQNode curr = pop(heap, &heapSize);
+        int d = curr.dist;
+        int u = curr.node;
+
+        if (d > dists[u]) continue;
+
+        for (Edge* e = adj[u]; e != NULL; e = e->next) {
+            if (dists[u] != INF && dists[u] + e->weight < dists[e->target]) {
+                dists[e->target] = dists[u] + e->weight;
+                push(heap, &heapSize, dists[e->target], e->target);
+            }
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        if (dists[i] == INF) printf("INF ");
+        else printf("%d ", dists[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
