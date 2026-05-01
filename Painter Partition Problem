@@ -1,0 +1,58 @@
+#include <stdio.h>
+
+// Function to check if boards can be painted within 'maxTime' using 'k' painters
+int isPossible(int boards[], int n, int k, int maxTime) {
+    int paintersCount = 1;
+    int currentTime = 0;
+
+    for (int i = 0; i < n; i++) {
+        // If a single board is longer than the time limit, it's impossible
+        if (boards[i] > maxTime) return 0;
+
+        if (currentTime + boards[i] > maxTime) {
+            // Assign to the next painter
+            paintersCount++;
+            currentTime = boards[i];
+            
+            // If we need more painters than available, return false
+            if (paintersCount > k) return 0;
+        } else {
+            currentTime += boards[i];
+        }
+    }
+    return 1;
+}
+
+int main() {
+    int n, k;
+    if (scanf("%d %d", &n, &k) != 2) return 0;
+
+    int boards[n];
+    int maxBoard = 0;
+    long long totalSum = 0;
+
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &boards[i]);
+        if (boards[i] > maxBoard) maxBoard = boards[i];
+        totalSum += boards[i];
+    }
+
+    int low = maxBoard;
+    long long high = totalSum;
+    int ans = (int)totalSum;
+
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+
+        if (isPossible(boards, n, k, mid)) {
+            ans = mid;      // Try to minimize the maximum time further
+            high = mid - 1;
+        } else {
+            low = mid + 1;  // Not possible, increase the allowed time
+        }
+    }
+
+    printf("%d\n", ans);
+
+    return 0;
+}
